@@ -1,0 +1,5 @@
+name: zen_mode_plugin
+title: "🧘‍♂️ Zen Mode: Deep Work Interface"
+description: "Hide distracting sidebars, headers, and UI elements with a sleek floating toggle or hotkey (Ctrl+Shift+Z). Instantly centers your workspace for a focused, premium AgentZero experience."
+version: 1.0.0
+settings_sections: []

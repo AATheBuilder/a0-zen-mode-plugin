@@ -1,0 +1,186 @@
+<html>
+<head>
+  <style>
+    /* Premium Zen Mode Glass Button */
+    .zen-mode-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: inherit; /* will use current text color */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 99999;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    .zen-mode-fab:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    .zen-mode-fab svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Transition defaults for native UI */
+    body nav, 
+    body aside, 
+    body #sidebar, 
+    body .sidebar,
+    body .flex-shrink-0.w-\[260px\],
+    body header,
+    body .fixed.left-0 {
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease !important;
+    }
+    
+    /* Center Chat Area Transition */
+    body .chat-container,
+    body main {
+        transition: max-width 0.4s ease, width 0.4s ease, padding 0.3s ease !important;
+    }
+
+    /* --- ZEN MODE ACTIVE STYLES --- */
+    body.zen-mode-active #sidebar,
+    body.zen-mode-active .sidebar,
+    body.zen-mode-active .flex-shrink-0.w-\[260px\],
+    body.zen-mode-active aside,
+    body.zen-mode-active .fixed.left-0 {
+       width: 0 !important;
+       transform: translateX(-100%) !important;
+       opacity: 0 !important;
+       margin: 0 !important;
+       padding: 0 !important;
+       pointer-events: none !important;
+       overflow: hidden !important;
+    }
+
+    /* Hide top header (if layout uses one) */
+    body.zen-mode-active header {
+       opacity: 0 !important;
+       pointer-events: none !important;
+       height: 0 !important;
+       overflow: hidden !important;
+    }
+
+    /* Center Chat Area Layout tweaks */
+    body.zen-mode-active main,
+    body.zen-mode-active .flex-1 {
+       width: 100vw !important;
+       max-width: 100vw !important;
+       padding-left: 0 !important;
+       padding-right: 0 !important;
+    }
+    
+    /* Make the chat messages feel centered and spacious */
+    body.zen-mode-active .max-w-3xl {
+       max-width: 900px !important;
+       margin: 0 auto !important;
+    }
+    
+    /* Add subtle padding to the bottom in case chat input rests there */
+    body.zen-mode-active #chat-input-area {
+        padding-bottom: 24px !important;
+    }
+  </style>
+  
+  <script type="module">
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('zenModePlugin', {
+        isZen: localStorage.getItem('a0-zen-mode') === 'true',
+        
+        toggleZen() {
+          this.isZen = !this.isZen;
+          localStorage.setItem('a0-zen-mode', this.isZen);
+          this.applyZen();
+        },
+        
+        applyZen() {
+          if (this.isZen) {
+            document.body.classList.add('zen-mode-active');
+          } else {
+            document.body.classList.remove('zen-mode-active');
+          }
+        }
+      });
+
+      // Apply state from store explicitly
+      Alpine.store('zenModePlugin').applyZen();
+
+      // Keyboard shortcuts listener
+      window.addEventListener('keydown', (e) => {
+        // Toggle: Ctrl + Shift + Z or Cmd + Shift + Z
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          Alpine.store('zenModePlugin').toggleZen();
+        }
+      });
+
+      // Exit on double Esc
+      let escCount = 0;
+      let escTimer;
+      window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+              escCount++;
+              clearTimeout(escTimer);
+              if (escCount === 2) {
+                  if (Alpine.store('zenModePlugin').isZen) {
+                     Alpine.store('zenModePlugin').toggleZen();
+                  }
+                  escCount = 0;
+              } else {
+                  escTimer = setTimeout(() => { escCount = 0; }, 400); // 400ms double-tap window
+              }
+          }
+      });
+    });
+
+    // Run safe class addition immediately on script execution to prevent layout snapping on reload
+    if (localStorage.getItem('a0-zen-mode') === 'true') {
+        document.body.classList.add('zen-mode-active');
+    }
+  </script>
+</head>
+<body>
+  <!-- Floating Action Button at Bottom Right via Alpine Teleport or just appended -->
+  <div x-data class="zen-mode-container" style="position: absolute; pointer-events: none;">
+    <button 
+      class="zen-mode-fab"
+      @click="$store.zenModePlugin.toggleZen()"
+      style="pointer-events: auto;"
+      :title="$store.zenModePlugin.isZen ? 'Exit Zen Mode (Esc x2)' : 'Enter Zen Mode (Ctrl+Shift+Z)'"
+    >
+      <!-- Mode OFF Icon (Focus Target / Eye) -->
+      <svg x-show="!$store.zenModePlugin.isZen" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"></circle>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      
+      <!-- Mode ON Icon (Minimize / Contract) -->
+      <svg x-show="$store.zenModePlugin.isZen" style="display: none;" viewBox="0 0 24 24">
+        <polyline points="4 14 10 14 10 20"></polyline>
+        <polyline points="20 10 14 10 14 4"></polyline>
+        <line x1="14" y1="10" x2="21" y2="3"></line>
+        <line x1="3" y1="21" x2="10" y2="14"></line>
+      </svg>
+    </button>
+  </div>
+</body>
+</html>
